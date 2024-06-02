@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аналіз Емоційного Забарвлення Відгуків</title>
+    <link rel="stylesheet" href="static/styles.css">
+    <script defer src="static/scripts.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Аналіз Емоційного Забарвлення Відгуків</h1>
+        <nav>
+            <ul>
+                <li><a href="#home">Головна</a></li>
+                <li><a href="#about">Про нас</a></li>
+                <li><a href="#contact">Контакти</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="input-section">
+            <h2>Вставте посилання для аналізу</h2>
+            <form id="reviewForm" action="/analyze" method="post">
+                <label for="reviewLink">Посилання:</label>
+                <input type="url" id="reviewLink" name="reviewLink" placeholder="Введіть URL відгуку" required>
+                <button type="submit">Аналізувати</button>
+            </form>
+            <div id="result"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Аналіз Емоційного Забарвлення Відгуків. Всі права захищені.</p>
+    </footer>
+</body>
+</html>
+
+
+
