@@ -15,6 +15,10 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(data => {
             const resultDiv = document.getElementById('result');
             resultDiv.innerHTML = '';
+            const overallSentiment = document.createElement('p');
+            overallSentiment.innerHTML = `<strong>Загальна оцінка емоційного забарвлення:</strong> ${data.overall_sentiment}`;
+            resultDiv.appendChild(overallSentiment);
+
             data.results.forEach(review => {
                 const reviewElement = document.createElement('div');
                 reviewElement.classList.add('review');
@@ -24,6 +28,34 @@ document.addEventListener('DOMContentLoaded', function () {
                     <p><strong>Оцінка:</strong> ${review.sentiment}</p>
                 `;
                 resultDiv.appendChild(reviewElement);
+            });
+
+            const ctx = document.getElementById('sentimentChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['1', '2', '3', '4', '5'],
+                    datasets: [{
+                        label: 'Кількість відгуків',
+                        data: [
+                            data.distribution[1],
+                            data.distribution[2],
+                            data.distribution[3],
+                            data.distribution[4],
+                            data.distribution[5]
+                        ],
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
             });
         })
         .catch((error) => {

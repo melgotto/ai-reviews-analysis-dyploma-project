@@ -1,3 +1,5 @@
+#A File with testing the main functionalities of project
+
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 import requests

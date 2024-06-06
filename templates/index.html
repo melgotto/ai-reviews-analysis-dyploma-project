@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Аналіз Емоційного Забарвлення Відгуків</title>
     <link rel="stylesheet" href="static/styles.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="static/scripts.js"></script>
 </head>
 <body>
@@ -27,6 +28,10 @@
                 <input type="url" id="reviewLink" name="reviewLink" placeholder="Введіть URL відгуку" required>
                 <button type="submit">Аналізувати</button>
             </form>
+
+            <div id="chart-container">
+                <canvas id="sentimentChart"></canvas>
+            </div>
             <div id="result"></div>
         </section>
     </main>
@@ -36,6 +41,7 @@
     </footer>
 </body>
 </html>
+
 
 
 

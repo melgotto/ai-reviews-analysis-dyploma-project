@@ -1,10 +1,11 @@
-import torch
-import re
-import requests
-from bs4 import BeautifulSoup
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import torch
+import requests
+from bs4 import BeautifulSoup
+import re
+import numpy as np
 
 app = Flask(__name__)
 CORS(app)
@@ -12,6 +13,7 @@ CORS(app)
 # Завантаження моделі та токенізатора
 tokenizer = AutoTokenizer.from_pretrained('nlptown/bert-base-multilingual-uncased-sentiment')
 model = AutoModelForSequenceClassification.from_pretrained('nlptown/bert-base-multilingual-uncased-sentiment')
+
 
 def find_comment_classes(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
@@ -27,17 +29,18 @@ def find_comment_classes(html_content):
                 comment_classes_text[class_name].append(text_content)
     return comment_classes_text
 
+
 def preprocess_text(text):
-    # Видалення непотрібного тексту
-    text = re.sub(r'\d{2} \w+ \d{4}Відгук від покупця\.Продавець: .*?\.Розмір: .*?\.Загальне враженняРекомендуєте даний товар\?Відповідність фото', '', text)
+    text = re.sub(r'\d{2} \w+ \d{4}Відгук від покупця\.Продавець: .*?\.\s*Розмір: .*?\.\s*Загальне враженняРекомендуєте даний товар\?Відповідність фото', '', text)
     return text.strip()
 
+
 def extract_nickname(text):
-    # Виділення нікнейму відправника
-    match = re.search(r'^(.*?\s?\d{1,2}\s?\w+)\s\d{4}Відгук від покупця', text)
+    match = re.search(r'Відгук від покупця\.(.*?)\.\s*Розмір:', text)
     if match:
         return match.group(1).strip()
     return "Невідомий"
+
 
 def analyze_sentiment(review_url):
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'}
@@ -51,31 +54,48 @@ def analyze_sentiment(review_url):
             if len(clean_text) < 512:
                 tokens = tokenizer.encode(clean_text, return_tensors='pt')
                 result = model(tokens)
-                sentiment = torch.argmax(result.logits).item()
-                if sentiment == 0:
-                    sentiment_text = 'Негативний'
-                elif sentiment == 1:
-                    sentiment_text = 'Нейтральний'
-                else:
-                    sentiment_text = 'Позитивний'
-                sentiments.append({'nickname': nickname, 'text': clean_text, 'sentiment': sentiment_text})
+                sentiment = int(torch.argmax(result.logits)) + 1
+                sentiments.append({'nickname': nickname, 'text': clean_text, 'sentiment': sentiment})
             else:
                 sentiments.append({'nickname': nickname, 'text': clean_text, 'sentiment': 'Текст перевищує 512 символів, аналіз не виконується.'})
     return sentiments
 
+
+def calculate_overall_sentiment(sentiments):
+    scores = [s['sentiment'] for s in sentiments if isinstance(s['sentiment'], int)]
+    if scores:
+        overall_sentiment = np.mean(scores)
+    else:
+        overall_sentiment = 'N/A'
+    return overall_sentiment
+
+
+def sentiment_distribution(sentiments):
+    distribution = {i: 0 for i in range(1, 6)}
+    for s in sentiments:
+        if isinstance(s['sentiment'], int):
+            distribution[s['sentiment']] += 1
+    return distribution
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
     data = request.json
     review_link = data['reviewLink']
     sentiments = analyze_sentiment(review_link)
-    return jsonify({'results': sentiments})
+    overall_sentiment = calculate_overall_sentiment(sentiments)
+    distribution = sentiment_distribution(sentiments)
+    return jsonify({'results': sentiments, 'overall_sentiment': overall_sentiment, 'distribution': distribution})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
 
