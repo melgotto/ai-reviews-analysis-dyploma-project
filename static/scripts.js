@@ -15,16 +15,22 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(data => {
             const resultDiv = document.getElementById('result');
             resultDiv.innerHTML = '';
+
             const overallSentiment = document.createElement('p');
             overallSentiment.innerHTML = `<strong>Загальна оцінка емоційного забарвлення:</strong> ${data.overall_sentiment}`;
             resultDiv.appendChild(overallSentiment);
+
+            const chartContainer = document.createElement('div');
+            chartContainer.id = 'chart-container';
+            chartContainer.innerHTML = '<canvas id="sentimentChart"></canvas>';
+            resultDiv.appendChild(chartContainer);
 
             data.results.forEach(review => {
                 const reviewElement = document.createElement('div');
                 reviewElement.classList.add('review');
                 reviewElement.innerHTML = `
                     <p><strong>Нікнейм:</strong> ${review.nickname}</p>
-                    <p><strong>Відгук:</strong> ${review.text}</p>
+                    
                     <p><strong>Оцінка:</strong> ${review.sentiment}</p>
                 `;
                 resultDiv.appendChild(reviewElement);
@@ -58,10 +64,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
         })
-        .catch((error) => {
-            console.error('Error:', error);
-        });
+        .catch(error => console.error('Error:', error));
     });
 });
+
 
 

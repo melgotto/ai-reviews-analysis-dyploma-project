@@ -31,12 +31,15 @@ def find_comment_classes(html_content):
 
 
 def preprocess_text(text):
-    text = re.sub(r'\d{2} \w+ \d{4}Відгук від покупця\.Продавець: .*?\.\s*Розмір: .*?\.\s*Загальне враженняРекомендуєте даний товар\?Відповідність фото', '', text)
+    # Видалення зайвого тексту на початку відгуку
+    text = re.sub(r'^\w+\s?\w*\d{2}\s\w+\s\d{4}Відгук від покупця\.Продавець: .*?\.Об\'єм: .*?\.', '', text)
+    # Видалення тексту відповіді на відгук
+    text = re.sub(r'Відповісти\d+.*$', '', text)
     return text.strip()
 
 
 def extract_nickname(text):
-    match = re.search(r'Відгук від покупця\.(.*?)\.\s*Розмір:', text)
+    match = re.match(r'^(\w+\s?\w*)\d{2}\s\w+\s\d{4}', text)
     if match:
         return match.group(1).strip()
     return "Невідомий"
