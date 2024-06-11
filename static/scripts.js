@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('reviewForm');
+    const resultDiv = document.getElementById('result');
     form.addEventListener('submit', function (event) {
         event.preventDefault();
 
@@ -13,11 +14,11 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .then(response => response.json())
         .then(data => {
-            const resultDiv = document.getElementById('result');
             resultDiv.innerHTML = '';
 
             const overallSentiment = document.createElement('p');
-            overallSentiment.innerHTML = `<strong>Загальна оцінка емоційного забарвлення:</strong> ${data.overall_sentiment}`;
+            overallSentiment.innerHTML = `<strong>Загальна оцінка емоційного забарвлення:</strong> 
+                                            ${data.overall_sentiment}`;
             resultDiv.appendChild(overallSentiment);
 
             const chartContainer = document.createElement('div');
@@ -30,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 reviewElement.classList.add('review');
                 reviewElement.innerHTML = `
                     <p><strong>Нікнейм:</strong> ${review.nickname}</p>
-                    
+                    <p><strong>Відгук:</strong> ${review.text}</p>
                     <p><strong>Оцінка:</strong> ${review.sentiment}</p>
                 `;
                 resultDiv.appendChild(reviewElement);

@@ -7,13 +7,18 @@
     <link rel="stylesheet" href="static/styles.css">
     <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="static/scripts.js"></script>
+        <script>
+        function goToHome() {
+            window.location.href = '/';
+        }
+    </script>
 </head>
 <body>
     <header>
         <h1>Аналіз Емоційного Забарвлення Відгуків</h1>
         <nav>
             <ul>
-                <li><a href="#home">Головна</a></li>
+                <li><a href="#" onclick="goToHome()">Головна</a></li>
                 <li><a href="#about">Про нас</a></li>
                 <li><a href="#contact">Контакти</a></li>
             </ul>

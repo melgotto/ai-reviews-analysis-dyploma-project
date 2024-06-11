@@ -21,6 +21,11 @@ model = AutoModelForSequenceClassification.from_pretrained('nlptown/bert-base-mu
 #results = soup.find_all('p', {'class': regex})
 #reviews = [result.text for result in results] !!!!!!!!!!!!!!!!!product-comments__list-item
 
+#p-review__content beautysmart
+#i3PYUe- google vidguki beautysmart
+#r-item__text comfy
+#product_review-item_text foxtrot
+
 
 def find_comment_classes(html_content):
     # Parse HTML content
@@ -28,6 +33,7 @@ def find_comment_classes(html_content):
 
     # Find all elements with class attribute
     elements_with_class = soup.find_all(class_=True)
+    #print(elements_with_class)
 
     # Dictionary to store classes containing 'comment' and their corresponding text content
     comment_classes_text = {}
@@ -37,7 +43,7 @@ def find_comment_classes(html_content):
         classes = element['class']  # Get classes of the element
         text_content = element.get_text(strip=True)  # Get text content of the element
         for class_name in classes:
-            if 'product-comments__list-item' in class_name:  # Check if 'comment' is in class name
+            if 'sc-qq6tcv-9 YSwhx' in class_name:  # Check if 'comment' is in class name
                 if class_name not in comment_classes_text:
                     comment_classes_text[class_name] = []  # Initialize list if class name not already in dictionary
                 comment_classes_text[class_name].append(text_content)
@@ -45,8 +51,8 @@ def find_comment_classes(html_content):
 
     return comment_classes_text
 
-url = 'https://rozetka.com.ua/ua/puma_4064536587899_eu/p357787365/comments/'
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'}
+url = 'https://www.notino.ua/vidhuk/calvin-klein/in2u-tualetna-voda-dlja-zhinok/'
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'}
 
 r = requests.get(url, headers=headers)
 h = r.text
@@ -63,3 +69,5 @@ for class_name, text_content_list in comments.items():
             print(int(torch.argmax(result.logits)) + 1)
         else:
             print("Text length exceeds 512, skipping sentiment analysis.")
+
+
