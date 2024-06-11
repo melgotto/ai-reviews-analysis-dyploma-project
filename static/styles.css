@@ -106,3 +106,18 @@ footer p {
     margin-top: 20px;
 }
 
+.result-info {
+    text-align: left;
+    margin-top: 20px;
+}
+
+.result-info p {
+    margin: 5px 0;
+}
+
+.result-info strong {
+    font-weight: bold;
+}
+
+
+

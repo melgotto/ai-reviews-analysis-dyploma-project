@@ -15,6 +15,22 @@ tokenizer = AutoTokenizer.from_pretrained('nlptown/bert-base-multilingual-uncase
 model = AutoModelForSequenceClassification.from_pretrained('nlptown/bert-base-multilingual-uncased-sentiment')
 
 
+def add_spaces_to_text(text):
+    # Додавання пробілів між літерами та числами
+    text = re.sub(r'(?<=[a-zа-яієїґ])(?=\d)', ' ', text)
+    text = re.sub(r'(?<=\d)(?=[a-zа-яієїґ])', ' ', text)
+    text = re.sub(r'(?=[A-ZА-ЯІЇЄҐ])(?=\d)', ' ', text)
+    text = re.sub(r'(?<=\d)(?=[A-ZА-ЯІЇЄҐ])', ' ', text)
+
+    # Додавання пробілів між великими і малими літерами
+    text = re.sub(r'(?<=[a-zа-яієїґ])(?=[A-ZА-ЯІЇЄҐ])', ' ', text)
+
+    # Додавання пробілів після крапки
+    text = re.sub(r'(?<=\.)(?=[^\s])', ' ', text)
+
+    return text
+
+
 def find_comment_classes(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
     elements_with_class = soup.find_all(class_=True)
@@ -46,16 +62,39 @@ def find_comment_classes(html_content):
     return comment_classes_text
 
 
+def extract_product_name_from_title(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    title_element = soup.find('h1', class_='page__title')
+    if title_element:
+        return title_element.get_text(strip=True)
+    return "Назва товару не знайдена"
+
+
+def extract_product_name_from_h2(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    h2_element = soup.find('h1', class_='h2 bold ng-star-inserted')
+    if h2_element:
+        return h2_element.get_text(strip=True)
+    return "Назва товару не знайдена"
+
+
 def preprocess_text(text):
     # Видалення зайвого тексту на початку відгуку
-    text = re.sub(r'^\w+\s?\w*\d{2}\s\w+\s\d{4}Відгук від покупця\.Продавець: .*?\.Об\'єм: .*?\.', '', text)
+    pattern = r'^(\w+(?:\s\w+)*)\s' \
+              r'(\d{2}\s\w+\s\d{4}\s)?' \
+              r'(Відгук від покупця\.\s)?' \
+              r'(покупця\.\s)?' \
+              r'(Продавець: .*?\.\s)?' \
+              r'(Розмір: .*?)?' \
+              r'(Об\'єм: .*? мл)?'
+    text = re.sub(pattern, '', text)
     # Видалення тексту відповіді на відгук
-    text = re.sub(r'Відповісти\d+.*$', '', text)
+    text = re.sub(r'Відповісти\s?\d+.*$', '', text)
     return text.strip()
 
 
 def extract_nickname(text):
-    match = re.match(r'^(\w+\s?\w*)\d{2}\s\w+\s\d{4}', text)
+    match = re.match(r'^(\w+(?:\s\w+)*?)\s\d{2}', text)
     if match:
         return match.group(1).strip()
     return "Невідомий"
@@ -70,27 +109,34 @@ def extract_nicknames_from_html(html_content):
 
 def analyze_sentiment(review_url):
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'}
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                      'AppleWebKit/537.36 (KHTML, like Gecko) '
+                      'Chrome/124.0.0.0 Safari/537.36'}
     response = requests.get(review_url, headers=headers)
     html_content = response.text
     comments = find_comment_classes(html_content)
     sentiments = []
 
+    product_name = None
+
     if 'product-comments__list-item' in comments:
+        product_name = extract_product_name_from_h2(html_content)
         for text_content in comments['product-comments__list-item']:
-            nickname = extract_nickname(text_content)
-            clean_text = preprocess_text(text_content)
+            text_content_with_spaces = add_spaces_to_text(text_content)
+            nickname = extract_nickname(text_content_with_spaces)
+            clean_text = preprocess_text(text_content_with_spaces)
             if len(clean_text) < 512:
                 tokens = tokenizer.encode(clean_text, return_tensors='pt')
                 result = model(tokens)
                 sentiment = int(torch.argmax(result.logits)) + 1
-                clean_text = ''
+                #clean_text = ''
                 sentiments.append({'nickname': nickname, 'text': clean_text, 'sentiment': sentiment})
             else:
-                clean_text = ''
+                #clean_text = ''
                 sentiments.append({'nickname': nickname, 'text': clean_text,
                                    'sentiment': 'Текст перевищує 512 символів, аналіз не виконується.'})
     elif 'product-comment__item-text' in comments:
+        product_name = extract_product_name_from_title(html_content)
         nicknames = extract_nicknames_from_html(html_content)
         for i, text_content in enumerate(comments['product-comment__item-text']):
             nickname = nicknames[i] if i < len(nicknames) else 'Невідомий'
@@ -103,7 +149,12 @@ def analyze_sentiment(review_url):
                 sentiments.append({'nickname': nickname, 'text': text_content,
                                    'sentiment': 'Текст перевищує 512 символів, аналіз не виконується.'})
 
-    return sentiments
+    overall_sentiment = calculate_overall_sentiment(sentiments)
+    recommendation = "Даний товар рекомендується для покупки, ви можете придбати його повернувшись на сайт за посиланням!"\
+        if overall_sentiment > 3.5 else "Системою не рекомендується купляти товари, які мають оцінку емоційного забарвлення " \
+                                        "відгуків меншу за 3.5"
+
+    return sentiments, overall_sentiment, recommendation, product_name
 
 
 def calculate_overall_sentiment(sentiments):
@@ -132,17 +183,15 @@ def index():
 def analyze():
     data = request.json
     review_link = data['reviewLink']
-    sentiments = analyze_sentiment(review_link)
-    overall_sentiment = calculate_overall_sentiment(sentiments)
+    sentiments, overall_sentiment, \
+        recommendation, product_name = analyze_sentiment(review_link)
     distribution = sentiment_distribution(sentiments)
-    return jsonify({'results': sentiments, 'overall_sentiment': overall_sentiment, 'distribution': distribution})
+    return jsonify({'results': sentiments,
+                    'overall_sentiment': overall_sentiment,
+                    'distribution': distribution,
+                    'recommendation': recommendation,
+                    'product_name': product_name})
 
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-
-
-

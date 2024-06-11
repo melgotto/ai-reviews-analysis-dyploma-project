@@ -43,19 +43,23 @@ def find_comment_classes(html_content):
         classes = element['class']  # Get classes of the element
         text_content = element.get_text(strip=True)  # Get text content of the element
         for class_name in classes:
-            if 'sc-qq6tcv-9 YSwhx' in class_name:  # Check if 'comment' is in class name
+            if 'store-feedback__review' in class_name:  # Check if 'comment' is in class name
                 if class_name not in comment_classes_text:
                     comment_classes_text[class_name] = []  # Initialize list if class name not already in dictionary
                 comment_classes_text[class_name].append(text_content)
 
-
     return comment_classes_text
 
-url = 'https://www.notino.ua/vidhuk/calvin-klein/in2u-tualetna-voda-dlja-zhinok/'
+
+url = 'https://hotline.ua/ua/yp/23727/reviews/'
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'}
 
 r = requests.get(url, headers=headers)
 h = r.text
+
+soup = BeautifulSoup(h, 'html.parser')
+elements_with_class = soup.find_all('div', class_='product-comment__item-title')
+nicknames = [element.get_text(strip=True) for element in elements_with_class]
 
 comments = find_comment_classes(h)
 for class_name, text_content_list in comments.items():
@@ -69,5 +73,7 @@ for class_name, text_content_list in comments.items():
             print(int(torch.argmax(result.logits)) + 1)
         else:
             print("Text length exceeds 512, skipping sentiment analysis.")
+
+
 
 

@@ -16,10 +16,19 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(data => {
             resultDiv.innerHTML = '';
 
+            const productName = document.createElement('p');
+            productName.innerHTML = `<strong>${data.product_name}</strong>`;
+            resultDiv.appendChild(productName);
+
             const overallSentiment = document.createElement('p');
             overallSentiment.innerHTML = `<strong>Загальна оцінка емоційного забарвлення:</strong> 
                                             ${data.overall_sentiment}`;
             resultDiv.appendChild(overallSentiment);
+
+            const recommendation = document.createElement('p');
+            recommendation.innerHTML = `<strong>Висновок:</strong> 
+                                            ${data.recommendation}`;
+            resultDiv.appendChild(recommendation);
 
             const chartContainer = document.createElement('div');
             chartContainer.id = 'chart-container';
@@ -68,6 +77,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .catch(error => console.error('Error:', error));
     });
 });
+
 
 
 
